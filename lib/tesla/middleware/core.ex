@@ -1,4 +1,12 @@
+defmodule Tesla.Middleware do
+  @type env_or_map :: %Tesla.Env{} | %{}
+  @type t :: {env_or_map, fun, any}
+  @callback call(env_or_map, fun, any) :: t
+end
+
 defmodule Tesla.Middleware.BaseUrl do
+  @behaviour Tesla.Middleware
+
   def call(env, run, base) do
     env = if !Regex.match?(~r/^https?:\/\//, env.url) do
       %{env | url: base <> env.url}
@@ -11,6 +19,8 @@ defmodule Tesla.Middleware.BaseUrl do
 end
 
 defmodule Tesla.Middleware.Headers do
+  @behaviour Tesla.Middleware
+
   def call(env, run, headers) do
     headers = Map.merge(env.headers, headers)
     run.(%{env | headers: headers})
@@ -18,6 +28,8 @@ defmodule Tesla.Middleware.Headers do
 end
 
 defmodule Tesla.Middleware.DecodeRels do
+  @behaviour Tesla.Middleware
+
   def call(env, run, []) do
     env = run.(env)
 
@@ -37,17 +49,21 @@ defmodule Tesla.Middleware.DecodeRels do
 end
 
 defmodule Tesla.Middleware.AdapterOptions do
+  @behaviour Tesla.Middleware
+
   def call(env, run, opts) do
     run.(%{env | opts: env.opts ++ opts})
   end
 end
 
 defmodule Tesla.Middleware.BaseUrlFromConfig do
- def call(env, run, opts) do
-   run.(%{env | url: config(opts)[:base_url] <> env.url})
- end
+  @behaviour Tesla.Middleware
 
- defp config(opts) do
-   Application.get_env(Keyword.fetch!(opts, :otp_app), Keyword.fetch!(opts, :module))
- end
+  def call(env, run, opts) do
+    run.(%{env | url: config(opts)[:base_url] <> env.url})
+  end
+
+  defp config(opts) do
+    Application.get_env(Keyword.fetch!(opts, :otp_app), Keyword.fetch!(opts, :module))
+  end
 end
