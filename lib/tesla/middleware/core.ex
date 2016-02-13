@@ -28,6 +28,8 @@ defmodule Tesla.Middleware.Headers do
 end
 
 defmodule Tesla.Middleware.QueryParams do
+  @behaviour Tesla.Middleware
+
   def call(env, run, query) do
     env = %{env | url: merge_url_and_query(env.url, query)}
     run.(env)
